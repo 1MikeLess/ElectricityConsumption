@@ -16,7 +16,7 @@
 				        <router-link class="nav-link text-light" to="/data/reports">Отчеты</router-link>
 				    </li>
 				    <li class="nav-item">
-				        <router-link class="nav-link text-light" to="/data/users">Пользователи</router-link>
+				        <router-link class="nav-link text-light" to="/data/profiles">Пользователи</router-link>
 				    </li>
 			    </ul>
 			  </div>
