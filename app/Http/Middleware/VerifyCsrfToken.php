@@ -20,6 +20,19 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         //
-        'api/*'
+        'api/*',
+
+        // Categories.vue
+        'db_query_add_category/*',
+        'db_query_add_category_value/*',
+        'db_query_delete_category/*',
+
+        // Equipment.vue
+        'db_query_add_equipment/*',
+        'db_query_remove_equipment/*',
+
+        // Users.vue
+        'db_query_add_user/*',
+        'db_query_delete_user/*'
     ];
 }

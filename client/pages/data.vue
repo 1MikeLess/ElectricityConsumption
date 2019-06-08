@@ -2,7 +2,6 @@
 	<div class="container-fluid">
 		<div class="container">
 		  	<nav class="navbar navbar-expand-md navbar-light bg-info mb-3">
-			  <!-- <span class="navbar-brand text-light">Потребление электроэнергии</span> -->
 			  <router-link class="navbar-brand text-light" to="/">Потребление электроэнергии</router-link>
 			  <div class="collapse navbar-collapse" id="navbarNavDropdown">
 			    <ul class="navbar-nav">

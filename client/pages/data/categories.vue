@@ -2,7 +2,6 @@
 	<div class="container-fluid px-3">
 		<div class="page-header">
 			<h5>Категории</h5>
-			<h1>{{max_category_key}}</h1>
 		</div>
 
 		<!-- Таблица категорий оборудования -->
@@ -13,21 +12,31 @@
 					@click="
 						delete_modal_text=props.item.name;
 						delete_category_id=props.item.category_key;
+						selectedCategory.name = props.item.name;
+						selectedCategory.id = props.item.category_key;
 						$bvModal.show('delete_msg')
 					">Удалить</b-button>
 			</template>
 			<template #values="props">
-				<div class="row justify-content-around">
-					<transition-group class="col-10" name="fade" tag="b-form-select" v-model="selected" :select-size="3">
+				<div class="row justify-content-space-between">
+					<transition-group class="col-8" name="fade" tag="b-form-select" v-model="selectedCategory.value" :select-size="3">
 						<option v-for="val in props.item.values" :key="val" value="val" v-text="val"></option>
 					</transition-group>
 					<b-button
-						class="btn-success col-1"
+						class="btn-success col-1 col-offset-1"
 						@click="
-							new_category_id_value=props.item.category_key;
-							new_category_name=props.item.name;
+							newCategory.idValue=props.item.category_key;
+							newCategory.name=props.item.name;
 							$bvModal.show('add_category_value_msg')
 						">+</b-button>
+				<!-- 	<b-button
+						class="btn-danger col-1 col-offset-1"
+						@click="
+							// selectedCategory.value=props.item.values;
+							// selectedCategory.name=props.item.name;
+							log(props);
+							$bvModal.show('remove_category_msg')
+						">x</b-button> -->
 				</div>
 				
 			</template>
@@ -55,11 +64,25 @@
 			ok="Подтвердить"
 			cancelTitle="Отмена"
 			ok-variant="success"
-			@ok="add_category(this)"
+			@ok="add_category(this); newCategory.name='';"
 		>
-			<span>Наименование категории: </span>
-			<b-form-input placeholder="Место установки" v-model="new_category_name"></b-form-input>
+			<label for="newCategoryName">Наименование категории: </label>
+			<b-form-input placeholder="Место установки" v-model="newCategory.name" id="newCategoryName"></b-form-input>
 		</b-modal>
+	
+		<!-- Удаление значения категории -->
+		<!-- <b-modal
+			id="remove_category_msg"
+			header-bg-variant="danger"
+			header-text-variant="light"
+			title="Удалить"
+			ok="Подтвердить"
+			cancelTitle="Отмена"
+			ok-variant="danger"
+			@ok="remove_category_value()"
+		>
+			<label for="removingCategoryName">Удалить значение категории '{{selected}}' для '{{selectedCategory.name}}'?</label>
+		</b-modal> -->
 
 		<!-- Добавление нового значения категории -->
 		<b-modal
@@ -72,8 +95,8 @@
 			ok-variant="success"
 			@ok="add_category_value"
 		>
-			<span>Новое значение категории для '{{new_category_name}}'</span>
-			<b-form-input placeholder="Цех 10А" v-model="new_category_value"></b-form-input>
+			<label>Новое значение категории для '{{selectedCategory.name}}'</label>
+			<b-form-input placeholder="Цех 10А" v-model="selectedCategory.value"></b-form-input>
 		</b-modal>
 	</div>
 </template>
@@ -88,10 +111,15 @@
 	      	delete_modal_text: '???',
 	      	delete_category_id: null,
 
-	      	new_category_name: null,
-	      	new_category_value: null,
-	      	new_category_id_value: null,
-	      	new_category_name_value: null,
+	      	// new_category_name: null,
+	      	// new_category_value: null,
+	      	// new_category_id_value: null,
+	      	// new_category_name_value: null,
+
+	      	newCategory: {},
+	      	selectedCategory: {},
+
+	      	__last_cat_vals: null,
 
 	      	fields: {
 	      		category_key: {
@@ -110,32 +138,36 @@
 	      		}
 	      	},
 	      	items: [
-	      		{ name: 'Место установки', category_key: 0, values: ['Цех 1', 'Цех 2'] },
-	      		{ name: 'Назначение', category_key: 1, values: ['Обработка', 'Шлифование'] }
+	      		// { name: 'Место установки', category_key: 0, values: ['Цех 1', 'Цех 2'] },
+	      		// { name: 'Назначение', category_key: 1, values: ['Обработка', 'Шлифование'] }
 	      	],
 	      }
 	    },
 	    methods: {
+	    	log(msg){
+	    		console.log(msg)
+	    	},
 	    	delete_category(category_key) {
-	    		this.items.splice(category_key, 1)
-	    		console.log(`Удалить категорию ${category_key}!`)
+	    		this.$axios.post(`db_query_delete_category/${category_key}`).then(()=>{
+	    			this.items.splice(this.items.indexOf(this.items.find(item => item.category_key === this.delete_category_id)), 1)
+	    		})
 	    	},
 	    	add_category() {
+	    		this.newCategory.id = this.max_category_key+1
 	    		this.items.push({
-	    			name: this.new_category_name,
-	    			category_key: this.max_category_key+1,
-	    			values: []
+	    			name: this.newCategory.name,
+	    			category_key: this.newCategory.id,
+	    			values: [],
 	    		})
-	    		console.log(this.new_category_name)
+	    		this.$axios.post(`db_query_add_category/${this.newCategory.id}/${this.newCategory.name}`)
 	    	},
 	    	add_category_value() {
-	    		console.log(this.items.find(item => item.category_key === this.new_category_id_value).category_key)
-	    		this.items.find(item => item.category_key === this.new_category_id_value)
-	    			.values.push(this.new_category_value)
+	    		let category = this.items.find(item => item.category_key === this.newCategory.idValue)
+	    		this.$axios.post(`db_query_add_category_value/${this.newCategory.idValue}/${this.selectedCategory.value}`)
+	    		.then(()=>{
+	    			category.values.push(this.selectedCategory.value)
+	    		})
 	    	},
-	  //   	getMaxOfArray(numArray) {
-			// 	return Math.max.apply(null, numArray)
-			// }
 	    },
 	    computed: {
 	    	max_category_key: {
@@ -144,15 +176,19 @@
 	    		}
 	    	}
 	    },
-	    
+	    mounted: function() {
+	    	this.$axios.get('db_query_get_categories').then(query => {
+	    		query.data.forEach(category => {
+	    			this.$axios.get('db_query_get_category_values/'+category.category_id)
+	    			.then((result) => {
+		    			this.items.push({
+			    			name: category.name,
+			    			category_key: category.category_id,
+			    			values: result.data,
+		    			})
+	    			})
+	    		})
+	    	})
+	    }
   	}
 </script>
-
-<style lang="sass" scoped>
-	// .fade-enter-active, .fade-leave-active 
-	//   transition: opacity .5s
-	
-	// .fade-enter, .fade-leave-to /* .fade-leave-active до версии 2.1.8 */ 
-	//   opacity: 0
-	
-</style>

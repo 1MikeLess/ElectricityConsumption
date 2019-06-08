@@ -1,13 +1,20 @@
 <template>
 	<div class="container-fluid px-3">
 		<div class="page-header">
-			<h5>Пользователи {{max_user_key}}</h5>
+			<h5>Пользователи 
+				<!-- <span>{{max_user_key}}</span> -->
+			</h5>
 		</div>
 		<b-table striped hover outlined dark small :fields="fields" :items="items">
 			<template #btn_delete="props">
 				<b-button
 					class="btn-danger"
-					@click="removing_user_model=props.item.login; $bvModal.show('remove_user_modal')"
+					@click="
+						selectedUser.id=props.item.user_id;
+						selectedUser.login=props.item.login;
+						selectedUser.status=props.item.status;
+						// log(props.item.user_id);
+					 	$bvModal.show('remove_user_modal')"
 				>Удалить</b-button>
 			</template>
 		</b-table>
@@ -27,8 +34,12 @@
 			ok-variant="success"
 			@ok="add_user"
 		>
-			<span>Логин: </span>
-			<b-form-input placeholder="Loginov" v-model="new_user_model"></b-form-input>
+			<label for="newUserLogin">Логин: </label>
+			<b-form-input placeholder="Loginov" v-model="newUser.login" id="newUserLogin"></b-form-input>
+			<label for="newUserEmail">EMAIL: </label>
+			<b-form-input placeholder="zhuzhuk@bk.ru" v-model="newUser.email" id="newUserEmail"></b-form-input>
+			<label for="newUserPass">Пароль: </label>
+			<b-form-input placeholder="****" v-model="newUser.password" id="newUserPass"></b-form-input>
 		</b-modal>
 
 		<b-modal
@@ -40,7 +51,7 @@
 			ok-variant="danger"
 			@ok="remove_user"
 		>
-			<span>Удалить пользователя '{{removing_user_name}}'?</span>
+			<span>Удалить пользователя '{{selectedUser.login}}'?</span>
 		</b-modal>
 
 	</div>
@@ -51,10 +62,8 @@
 		name: 'profiles',
 		data() {
 			return {
-				new_user_model: null,
-
-				removing_user_name: null,
-				removing_user_id: null,
+				newUser: {},
+				selectedUser: {},
 
 				fields: {
 					user_id: {
@@ -74,23 +83,31 @@
 					}
 				},
 				items: [
-					{ user_id: 0, login: 'Danilchuk', status: 'Админ' },
-					{ user_id: 1, login: 'Loganov_dn', status: 'Обычный' }
+					// { user_id: 0, login: 'Danilchuk', status: 'Админ' },
+					// { user_id: 1, login: 'Loganov_dn', status: 'Обычный' }
 				]
 			}
 		},
 		methods: {
+			log(data) {
+				console.log(data)
+			},
 			add_user(){
+				this.newUser.id = this.max_user_key+1
 				this.items.push({
 					user_id: this.max_user_key+1,
-					login: this.new_user_model,
+					login: this.newUser.login,
 					status: 'Обычный'
 				})
+				this.$axios.post(`db_query_add_user/${this.newUser.id}/${this.newUser.login}/${this.newUser.email}/${this.newUser.password}`)
+
 				console.log('An user has been added')
 			},
 			remove_user() {
-				this.items.splice(this.removing_user_id, 1)
+				this.$axios.post('db_query_delete_user/'+this.selectedUser.id)
+				this.items.pop(this.items.find(u => u.user_id === this.selectedUser.id))
 				console.log('An user has been removed')
+				console.log(this.selectedUser.id)
 			},
 		},
 		computed: {
@@ -99,6 +116,16 @@
 					return this.items.length>0 ? Math.max.apply(null, this.items.map(item => item.user_id)) : 0
 				}
 			}
+		},
+		mounted() {
+			this.$axios.get('db_query_get_users').then(users => {
+				users.data.forEach(user => {
+					this.items.push({
+						user_id: user.id,
+						login: user.name,
+					})
+				})
+			})
 		}
 	}
 </script>
